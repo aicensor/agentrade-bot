@@ -1,0 +1,112 @@
+# ─────────────────────────────────────────────────────────────
+# Agentrade Engine v2 — Default Configuration
+# ─────────────────────────────────────────────────────────────
+
+engine:
+  # Snapshot interval for crash recovery (Problem #3)
+  snapshot_interval_sec: 5
+
+  # Position reconciliation interval (Problem #4)
+  reconciliation_interval_sec: 30
+
+  # Order queue flush interval (Problem #2B)
+  flush_interval_ms: 500
+
+  # Max jitter for anti-thundering-herd (Problem #2A)
+  max_jitter_ms: 20
+
+# ─────────────────────────────────────────────────────────────
+# Exchange Settings
+# ─────────────────────────────────────────────────────────────
+
+exchanges:
+  bybit:
+    ws_ticker_speed_ms: 100
+    rate_limit_per_sec: 8
+    rate_limit_per_min: 100
+    supports_ws_orders: false
+
+  binance:
+    ws_ticker_speed_ms: 500
+    rate_limit_per_sec: 8
+    rate_limit_per_min: 400
+    supports_ws_orders: false
+
+  hyperliquid:
+    ws_ticker_speed_ms: 50
+    rate_limit_per_sec: 16
+    rate_limit_per_min: 960
+    supports_ws_orders: true
+
+  okx:
+    ws_ticker_speed_ms: 100
+    rate_limit_per_sec: 8
+    rate_limit_per_min: 480
+    supports_ws_orders: false
+
+  mexc:
+    ws_ticker_speed_ms: 1000
+    rate_limit_per_sec: 8
+    rate_limit_per_min: 400
+    supports_ws_orders: false
+
+# ─────────────────────────────────────────────────────────────
+# Price Feed (Problem #1, #16)
+# ─────────────────────────────────────────────────────────────
+
+price_feed:
+  # Switch to REST fallback after N seconds of no WS data
+  stale_threshold_sec: 3.0
+
+  # Alert all users after N seconds of no data
+  critical_threshold_sec: 30.0
+
+# ─────────────────────────────────────────────────────────────
+# Risk Defaults (Problems #9, #10, #13)
+# ─────────────────────────────────────────────────────────────
+
+risk:
+  # Maximum leverage allowed (Problem #10)
+  max_leverage: 10
+
+  # Require isolated margin (Problem #10)
+  require_isolated: true
+
+  # Stop-loss type: "market" or "limit" (Problem #9)
+  sl_type: "limit"
+
+  # Limit SL buffer percentage (Problem #9)
+  sl_buffer_pct: 0.3
+
+  # Wick protection (Problem #13)
+  wick_protection: true
+  confirmation_seconds: 3.0
+
+  # Maximum funding rate drain before alert (Problem #12)
+  max_funding_drain_pct: 5.0
+
+# ─────────────────────────────────────────────────────────────
+# Persistence (Problem #3)
+# ─────────────────────────────────────────────────────────────
+
+persistence:
+  redis_url: "redis://localhost:6379/0"
+  fallback_path: "state/positions.json"
+
+# ─────────────────────────────────────────────────────────────
+# Notifications
+# ─────────────────────────────────────────────────────────────
+
+telegram:
+  bot_token: ""          # Set via env: TELEGRAM_BOT_TOKEN
+  admin_chat_id: 0       # Set via env: TELEGRAM_ADMIN_CHAT_ID
+  verbose_trailing: false # Send message on every SL update?
+
+# ─────────────────────────────────────────────────────────────
+# Logging
+# ─────────────────────────────────────────────────────────────
+
+logging:
+  level: "INFO"          # DEBUG, INFO, WARNING, ERROR
+  format: "json"         # "json" or "console"
+  file: "logs/engine.log"

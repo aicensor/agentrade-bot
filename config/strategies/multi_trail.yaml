@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────
+# Multi-Level Trailing TP/SL — Strategy Configuration
+# ─────────────────────────────────────────────────────────────
+#
+# Behavior:
+#   TP1 hit → partial close + SL to breakeven
+#   TP2 hit → partial close + SL to TP1 price
+#   TP3 hit → start tight trailing
+#   After TP3 → trail SL behind price
+#
+# ─────────────────────────────────────────────────────────────
+
+# Take-profit levels (% from entry price)
+tp1_pct: 3.0
+tp2_pct: 5.0
+tp3_pct: 8.0
+
+# Partial close at each TP level (0.0 = no close, 0.33 = close 33%)
+tp1_close_pct: 0.33
+tp2_close_pct: 0.33
+tp3_close_pct: 0.0       # Don't close at TP3, just start trailing
+
+# ─── Trailing Mode ───────────────────────────────────────────
+
+# "percent" = fixed percentage trail
+# "atr" = ATR-based adaptive trail (Problem #14)
+trail_mode: "percent"
+trail_pct: 1.5           # Trail distance (for percent mode)
+
+# ATR settings (only used if trail_mode = "atr")
+atr_period: 14
+atr_multiplier: 2.0
+
+# ─── Smart Threshold (Problem #2C) ──────────────────────────
+
+# Minimum SL change to trigger an API call
+# Prevents 500 API calls when price moves $90→$85 in tiny steps
+min_sl_change_pct: 0.1
+
+# ─── Slippage Protection (Problem #9) ───────────────────────
+
+# "market" = standard market stop-loss
+# "limit" = limit stop-loss with buffer (recommended)
+sl_type: "limit"
+sl_buffer_pct: 0.3       # Limit placed 0.3% beyond trigger price
+
+# ─── Wick Protection (Problem #13) ──────────────────────────
+
+wick_protection: true
+confirmation_seconds: 3.0 # Price must stay past SL for 3s before triggering
+
+# ─── Funding Drain Protection (Problem #12) ─────────────────
+
+max_funding_drain_pct: 5.0  # Alert if funding paid exceeds 5% of margin

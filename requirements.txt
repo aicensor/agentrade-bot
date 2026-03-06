@@ -1,0 +1,28 @@
+# Agentrade Engine v2
+# Python 3.12+
+
+# Exchange connectivity
+ccxt==4.4.54                  # REST + WebSocket (ccxt.pro included)
+aiohttp==3.11.12              # Async HTTP client (ccxt dependency)
+
+# State & persistence
+redis[hiredis]==5.2.1         # Redis client with C parser
+motor==3.7.0                  # Async MongoDB driver
+pymongo==4.10.1               # MongoDB driver (motor dependency)
+
+# Configuration
+pyyaml==6.0.2                 # YAML config parsing
+watchdog==6.0.0               # File watcher for hot-reload
+
+# Notifications
+python-telegram-bot==21.10    # Telegram Bot API (async)
+
+# Indicators & math
+numpy==2.2.3                  # Numerical operations
+ta==0.11.0                    # Technical analysis (ATR, etc.)
+
+# Logging & monitoring
+structlog==24.4.0             # Structured logging
+
+# Development
+python-dotenv==1.0.1          # Environment variables
