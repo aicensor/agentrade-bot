@@ -54,8 +54,8 @@ class MultiLevelTrailStrategy(BaseStrategy):
         """
         cfg = MultiLevelTrailConfig.from_dict(position.strategy_config)
 
-        # Update extremes
-        position.update_extremes(price)
+        # Update extremes and last price
+        position.update_extremes(price, mark_price)
 
         # Calculate PNL percentage
         pnl_pct = self._calc_pnl_pct(position, price)

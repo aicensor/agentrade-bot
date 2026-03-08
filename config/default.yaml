@@ -25,30 +25,35 @@ exchanges:
     rate_limit_per_sec: 8
     rate_limit_per_min: 100
     supports_ws_orders: false
+    min_notional_usd: 5        # Minimum order value in USD
 
   binance:
     ws_ticker_speed_ms: 500
     rate_limit_per_sec: 8
     rate_limit_per_min: 400
     supports_ws_orders: false
+    min_notional_usd: 5        # Minimum order value in USD
 
   hyperliquid:
     ws_ticker_speed_ms: 50
     rate_limit_per_sec: 16
     rate_limit_per_min: 960
     supports_ws_orders: true
+    min_notional_usd: 10       # Minimum order value in USD ($10 on HL)
 
   okx:
     ws_ticker_speed_ms: 100
     rate_limit_per_sec: 8
     rate_limit_per_min: 480
     supports_ws_orders: false
+    min_notional_usd: 5        # Minimum order value in USD
 
   mexc:
     ws_ticker_speed_ms: 1000
     rate_limit_per_sec: 8
     rate_limit_per_min: 400
     supports_ws_orders: false
+    min_notional_usd: 5        # Minimum order value in USD
 
 # ─────────────────────────────────────────────────────────────
 # Price Feed (Problem #1, #16)

@@ -35,16 +35,31 @@ class ExchangeAdapter:
         await adapter.close_position(position, pct=0.33)
     """
 
+    # Exchange-specific minimum order value in USD
+    # If not set here, falls back to config/default.yaml
+    MIN_NOTIONAL_DEFAULTS: dict[str, float] = {
+        "hyperliquid": 10.0,
+        "binance": 5.0,
+        "bybit": 5.0,
+        "okx": 5.0,
+        "mexc": 5.0,
+    }
+
     def __init__(
         self,
         exchange: ccxtpro.Exchange,
         user: UserConfig,
         rate_limiter: RateLimiter,
+        min_notional_usd: float = 0.0,
     ) -> None:
         self.exchange = exchange
         self.user = user
         self.rate_limiter = rate_limiter
         self._closed = False
+        self.min_notional_usd = (
+            min_notional_usd
+            or self.MIN_NOTIONAL_DEFAULTS.get(user.exchange, 5.0)
+        )
 
     @classmethod
     async def create(
@@ -185,20 +200,60 @@ class ExchangeAdapter:
             )
             return None
 
+    def calc_min_order_qty(self, price: float) -> float:
+        """Calculate minimum order quantity based on min notional and current price."""
+        if price <= 0 or self.min_notional_usd <= 0:
+            return 0.0
+        return self.min_notional_usd / price
+
     async def close_position(
         self,
         position: Position,
         pct: float = 1.0,
+        current_price: float = 0.0,
     ) -> dict | None:
         """
         Close a position (full or partial).
         pct=0.33 means close 33% of the position.
+
+        Handles minimum notional:
+        - If close qty is below min, bumps up to min (capped at full position)
+        - Returns actual closed qty in result['info']['actual_close_qty']
         """
         await self.rate_limiter.acquire()
 
         try:
             side = "buy" if position.side == Side.SHORT else "sell"
             qty = position.size * pct
+
+            # --- Min notional check ---
+            if current_price > 0 and self.min_notional_usd > 0:
+                notional = qty * current_price
+                if notional < self.min_notional_usd:
+                    min_qty = self.calc_min_order_qty(current_price)
+                    if position.size <= min_qty:
+                        # Remaining position is too small to partially close
+                        # Close all remaining instead
+                        qty = position.size
+                        logger.info(
+                            "min_notional_close_all",
+                            user=position.user_id,
+                            symbol=position.symbol,
+                            original_qty=position.size * pct,
+                            adjusted_qty=qty,
+                            min_notional=self.min_notional_usd,
+                        )
+                    else:
+                        # Bump up to minimum order size
+                        qty = min_qty
+                        logger.info(
+                            "min_notional_bumped",
+                            user=position.user_id,
+                            symbol=position.symbol,
+                            original_qty=position.size * pct,
+                            adjusted_qty=qty,
+                            min_notional=self.min_notional_usd,
+                        )
 
             result = await self.exchange.create_order(
                 symbol=position.symbol,
@@ -207,6 +262,11 @@ class ExchangeAdapter:
                 amount=qty,
                 params={"reduceOnly": True},
             )
+
+            # Store actual closed qty for caller
+            if result and isinstance(result, dict):
+                result.setdefault("info", {})
+                result["info"]["actual_close_qty"] = qty
 
             logger.info(
                 "position_closed",

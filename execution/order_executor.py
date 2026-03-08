@@ -158,21 +158,36 @@ class OrderExecutor:
         Partial close + SL update.
         action.close_pct = how much to close (0.33 = 33%)
         action.price = new SL after partial close
+
+        Handles minimum notional: adapter may close more than requested
+        if the requested amount is below exchange minimum.
         """
         position = self._get_position(action.position_key)
         if not position:
             return False
 
-        # Step 1: Close the partial amount
-        close_result = await adapter.close_position(position, pct=action.close_pct)
+        # Get current price for min notional check
+        current_price = position.entry_price  # fallback
+        if hasattr(position, "last_price") and position.last_price:
+            current_price = position.last_price
+
+        # Step 1: Close the partial amount (adapter handles min notional)
+        close_result = await adapter.close_position(
+            position, pct=action.close_pct, current_price=current_price
+        )
         if not close_result:
             return False
 
-        # Update position size in memory
-        position.size *= (1 - action.close_pct)
+        # Use actual closed qty (may differ from requested due to min notional)
+        actual_qty = close_result.get("info", {}).get("actual_close_qty", 0)
+        if actual_qty > 0:
+            position.size = max(0.0, position.size - actual_qty)
+        else:
+            # Fallback to percentage-based
+            position.size *= (1 - action.close_pct)
 
-        # Step 2: Update SL on remaining position
-        if action.price > 0:
+        # Step 2: Update SL on remaining position (only if position still open)
+        if position.size > 0 and action.price > 0:
             sl_result = await adapter.set_stop_loss(
                 position=position,
                 price=action.price,
@@ -182,12 +197,21 @@ class OrderExecutor:
             if sl_result:
                 position.current_sl = action.price
                 position.last_sl_update_price = action.price
+        elif position.size <= 0:
+            from core.types import PositionState
+            position.state = PositionState.CLOSED
+            logger.info(
+                "position_fully_closed_by_partials",
+                user=action.user_id,
+                symbol=action.symbol,
+            )
 
         logger.info(
             "partial_close_executed",
             user=action.user_id,
             symbol=action.symbol,
-            closed_pct=action.close_pct,
+            requested_pct=action.close_pct,
+            actual_closed_qty=actual_qty,
             remaining_size=position.size,
             new_sl=action.price,
         )

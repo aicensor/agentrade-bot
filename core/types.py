@@ -125,6 +125,10 @@ class Position:
     tp2_hit: bool = False
     tp3_hit: bool = False
 
+    # Price tracking
+    last_price: float = 0.0             # Latest known price (for order sizing)
+    last_mark_price: float = 0.0        # Latest mark price
+
     # Trailing tracking
     highest_since_entry: float = 0.0    # For long trailing
     lowest_since_entry: float = float('inf')  # For short trailing
@@ -144,8 +148,11 @@ class Position:
     last_updated: float = field(default_factory=time.time)
     last_sl_update_price: float = 0.0   # For smart threshold (Problem #2C)
 
-    def update_extremes(self, price: float) -> None:
+    def update_extremes(self, price: float, mark_price: float = 0.0) -> None:
         """Track highest/lowest price since entry for trailing calculation"""
+        self.last_price = price
+        if mark_price:
+            self.last_mark_price = mark_price
         if price > self.highest_since_entry:
             self.highest_since_entry = price
         if price < self.lowest_since_entry:
