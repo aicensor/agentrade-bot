@@ -106,6 +106,10 @@ telegram:
   bot_token: ""          # Set via env: TELEGRAM_BOT_TOKEN
   admin_chat_id: 0       # Set via env: TELEGRAM_ADMIN_CHAT_ID
   verbose_trailing: false # Send message on every SL update?
+  allowed_user_ids:      # Telegram user IDs allowed to interact with the bot
+    - 6361658701
+    - 6997066193
+    - 7904387258
 
 # ─────────────────────────────────────────────────────────────
 # Logging

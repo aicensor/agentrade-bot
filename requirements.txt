@@ -2,8 +2,8 @@
 # Python 3.12+
 
 # Exchange connectivity
-ccxt==4.4.54                  # REST + WebSocket (ccxt.pro included)
-aiohttp==3.11.12              # Async HTTP client (ccxt dependency)
+ccxt>=4.5.42                  # REST + WebSocket (ccxt.pro included)
+aiohttp<=3.10.11              # Async HTTP client (ccxt dependency)
 
 # State & persistence
 redis[hiredis]==5.2.1         # Redis client with C parser

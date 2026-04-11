@@ -84,12 +84,21 @@ class Engine:
         # Telegram
         tg_cfg = self.config.get("telegram", {})
         bot_token = tg_cfg.get("bot_token") or os.getenv("TELEGRAM_BOT_TOKEN", "")
-        admin_chat = tg_cfg.get("admin_chat_id") or int(os.getenv("TELEGRAM_ADMIN_CHAT_ID", "0"))
+        admin_chat = tg_cfg.get("admin_chat_id") or int(os.getenv("TELEGRAM_ADMIN_CHAT_ID") or "0")
+
+        # Allowed user IDs — from config or env (comma-separated)
+        allowed_ids = tg_cfg.get("allowed_user_ids", [])
+        if not allowed_ids:
+            env_ids = os.getenv("TELEGRAM_ALLOWED_USER_IDS", "")
+            if env_ids:
+                allowed_ids = [int(uid.strip()) for uid in env_ids.split(",") if uid.strip()]
+
         self.notifier = TelegramNotifier(
             bot_token=bot_token,
             event_bus=self.event_bus,
             default_chat_id=admin_chat,
             verbose_trailing=tg_cfg.get("verbose_trailing", False),
+            allowed_user_ids=allowed_ids,
         )
 
         # Price feeds — one per exchange

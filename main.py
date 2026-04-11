@@ -18,9 +18,13 @@ import sys
 from pathlib import Path
 
 import structlog
+from dotenv import load_dotenv
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
+
+# Load .env before any config reads
+load_dotenv(Path(__file__).parent / ".env")
 
 from core.engine import Engine
 from core.types import MultiLevelTrailConfig, Position, Side, UserConfig
@@ -30,7 +34,6 @@ def setup_logging(level: str = "INFO", fmt: str = "console") -> None:
     """Configure structured logging"""
     processors = [
         structlog.stdlib.add_log_level,
-        structlog.stdlib.add_logger_name,
         structlog.dev.set_exc_info,
         structlog.processors.TimeStamper(fmt="iso"),
     ]

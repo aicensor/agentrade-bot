@@ -43,11 +43,13 @@ class TelegramNotifier:
         event_bus: EventBus,
         default_chat_id: int = 0,
         verbose_trailing: bool = False,  # Send message on every SL update?
+        allowed_user_ids: list[int] | None = None,  # Telegram user ID whitelist
     ) -> None:
         self.bot_token = bot_token
         self.event_bus = event_bus
         self.default_chat_id = default_chat_id
         self.verbose_trailing = verbose_trailing
+        self.allowed_user_ids: set[int] = set(allowed_user_ids or [])
 
         self._bot: Any | None = None
         self._chat_ids: dict[str, int] = {}  # user_id → chat_id
@@ -57,13 +59,22 @@ class TelegramNotifier:
         self._messages_sent = 0
         self._running = False
 
+    def is_user_allowed(self, user_id: int) -> bool:
+        """Check if a Telegram user ID is in the whitelist"""
+        if not self.allowed_user_ids:
+            return True  # No whitelist = allow all
+        return user_id in self.allowed_user_ids
+
     async def start(self) -> None:
         """Initialize bot and register event handlers"""
         self._running = True
 
         if HAS_TELEGRAM and self.bot_token:
             self._bot = Bot(token=self.bot_token)
-            logger.info("telegram_notifier_started")
+            logger.info(
+                "telegram_notifier_started",
+                allowed_users=len(self.allowed_user_ids) or "all",
+            )
         else:
             logger.warning("telegram_running_in_dry_mode")
 
